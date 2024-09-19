@@ -1,27 +1,25 @@
-import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Models } from "appwrite";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { zodResolver } from "@hookform/resolvers/zod";
+
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
-  FormMessage,
   FormLabel,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import FileUploader from "../shared/FileUploader";
+  FormMessage,
+  Button,
+  Input,
+  Textarea,
+} from "@/components/ui";
 import { PostValidation } from "@/lib/validation";
-import { ID, Models } from "appwrite";
-import { useUserContext } from "@/Context/AuthContext";
-import { useToast } from "../ui/use-toast";
-import { useNavigate } from "react-router-dom";
-import {
-  useCreatePost,
-  useUpdatePost,
-} from "@/lib/react-query/queryAndMutations";
+import { useToast } from "@/components/ui/use-toast";
+import { useUserContext } from "@/context/AuthContext";
+import { FileUploader, Loader } from "@/components/shared";
+import { useCreatePost, useUpdatePost } from "@/lib/react-query/queries";
 
 type PostFormProps = {
   post?: Models.Document;
@@ -29,60 +27,63 @@ type PostFormProps = {
 };
 
 const PostForm = ({ post, action }: PostFormProps) => {
-  const { mutateAsync: createPost, isPending: isLoadingCreate } =
-    useCreatePost();
-  const { mutateAsync: updatePost, isPending: isLoadingUpdate } =
-    useUpdatePost();
-
-  const { user } = useUserContext();
-  const { toast } = useToast();
   const navigate = useNavigate();
-
+  const { toast } = useToast();
+  const { user } = useUserContext();
   const form = useForm<z.infer<typeof PostValidation>>({
     resolver: zodResolver(PostValidation),
     defaultValues: {
       caption: post ? post?.caption : "",
       file: [],
-      location: post ? post?.location : "",
+      location: post ? post.location : "",
       tags: post ? post.tags.join(",") : "",
     },
   });
-  async function onSubmit(values: z.infer<typeof PostValidation>) {
+
+  // Query
+  const { mutateAsync: createPost, isPending: isLoadingCreate } =
+    useCreatePost();
+  const { mutateAsync: updatePost, isPending: isLoadingUpdate } =
+    useUpdatePost();
+
+  // Handler
+  const handleSubmit = async (value: z.infer<typeof PostValidation>) => {
+    // ACTION = UPDATE
     if (post && action === "Update") {
       const updatedPost = await updatePost({
-        ...values,
+        ...value,
         postId: post.$id,
-        imageId: post?.imageId,
-        imageUrl: post?.imageUrl,
+        imageId: post.imageId,
+        imageUrl: post.imageUrl,
       });
 
       if (!updatedPost) {
-        return toast({ title: `${action} post failed. Please try again!` });
+        toast({
+          title: `${action} post failed. Please try again.`,
+        });
       }
-
       return navigate(`/posts/${post.$id}`);
-      // return navigate(`/posts/details`);
     }
 
-    // ACTION == CREATE
+    // ACTION = CREATE
     const newPost = await createPost({
-      ...values,
+      ...value,
       userId: user.id,
     });
-    navigate("/");
 
     if (!newPost) {
       toast({
         title: `${action} post failed. Please try again.`,
       });
     }
-  }
+    navigate("/");
+  };
 
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="flex flex-col w-full gap-9 max-w-5xl"
+        onSubmit={form.handleSubmit(handleSubmit)}
+        className="flex flex-col gap-9 w-full  max-w-5xl"
       >
         <FormField
           control={form.control}
@@ -93,7 +94,6 @@ const PostForm = ({ post, action }: PostFormProps) => {
               <FormControl>
                 <Textarea
                   className="shad-textarea custom-scrollbar"
-                  placeholder="shadcn"
                   {...field}
                 />
               </FormControl>
@@ -104,7 +104,7 @@ const PostForm = ({ post, action }: PostFormProps) => {
 
         <FormField
           control={form.control}
-          name="file" // 👈 Check it
+          name="file"
           render={({ field }) => (
             <FormItem>
               <FormLabel className="shad-form_label">Add Photos</FormLabel>
@@ -121,7 +121,7 @@ const PostForm = ({ post, action }: PostFormProps) => {
 
         <FormField
           control={form.control}
-          name="location" // 👈 Check it
+          name="location"
           render={({ field }) => (
             <FormItem>
               <FormLabel className="shad-form_label">Add Location</FormLabel>
@@ -135,17 +135,17 @@ const PostForm = ({ post, action }: PostFormProps) => {
 
         <FormField
           control={form.control}
-          name="tags" // 👈 Check it
+          name="tags"
           render={({ field }) => (
             <FormItem>
               <FormLabel className="shad-form_label">
-                Add tags(seperated by comma ",")
+                Add Tags (separated by comma " , ")
               </FormLabel>
               <FormControl>
                 <Input
+                  placeholder="Art, Expression, Learn"
                   type="text"
                   className="shad-input"
-                  placeholder="Art, Expression, Learn"
                   {...field}
                 />
               </FormControl>
@@ -153,17 +153,22 @@ const PostForm = ({ post, action }: PostFormProps) => {
             </FormItem>
           )}
         />
-        <div className="flex justify-end items-center gap-4">
-          <Button type="button" className="shad-button_dark_4" size={"lg"}>
+
+        <div className="flex gap-4 items-center justify-end">
+          <Button
+            type="button"
+            className="shad-button_dark_4"
+            onClick={() => navigate(-1)}
+          >
             Cancel
           </Button>
           <Button
-            className="shad-button_primary whitespace-nowrap"
             type="submit"
+            className="shad-button_primary whitespace-nowrap"
             disabled={isLoadingCreate || isLoadingUpdate}
           >
-            {(isLoadingCreate || isLoadingUpdate) && "Loading..."}
-            {action}
+            {(isLoadingCreate || isLoadingUpdate) && <Loader />}
+            {action} Post
           </Button>
         </div>
       </form>

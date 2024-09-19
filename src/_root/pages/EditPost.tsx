@@ -1,30 +1,37 @@
-import PostForm from "@/components/forms/PostForm";
-import { useGetPostById } from "@/lib/react-query/queryAndMutations";
-import Loader from "@/components/shared/Loader";
 import { useParams } from "react-router-dom";
+
+import { Loader } from "@/components/shared";
+import PostForm from "@/components/forms/PostForm";
+import { useGetPostById } from "@/lib/react-query/queries";
 
 const EditPost = () => {
   const { id } = useParams();
-  const { data: post, isPending } = useGetPostById(id || "");
+  const { data: post, isLoading } = useGetPostById(id);
 
-  if (isPending) return <Loader />;
+  if (isLoading)
+    return (
+      <div className="flex-center w-full h-full">
+        <Loader />
+      </div>
+    );
 
   return (
-    <section className="flex flex-1">
+    <div className="flex flex-1">
       <div className="common-container">
-        <div className="max-w-5xl flex-start gap-3 justify-start w-full">
+        <div className="flex-start gap-3 justify-start w-full max-w-5xl">
           <img
-            src="/assets/icons/add-post.svg"
-            height={36}
+            src="/assets/icons/edit.svg"
             width={36}
-            alt="add"
+            height={36}
+            alt="edit"
+            className="invert-white"
           />
-          <h2 className="h3-bold md:h2-bold text-left w-full ">Edit Post</h2>
+          <h2 className="h3-bold md:h2-bold text-left w-full">Edit Post</h2>
         </div>
 
-        {isPending ? <Loader /> : <PostForm action="Update" post={post} />}
+        {isLoading ? <Loader /> : <PostForm action="Update" post={post} />}
       </div>
-    </section>
+    </div>
   );
 };
 

@@ -1,21 +1,18 @@
-import { Link, useNavigate } from "react-router-dom";
-import { Button } from "../ui/button";
-import { useSignOutAccount } from "@/lib/react-query/queryAndMutations";
 import { useEffect } from "react";
-import { useUserContext } from "@/Context/AuthContext";
+import { Link, useNavigate } from "react-router-dom";
 
-const TopBar = () => {
-  const { mutate: signOut, isSuccess } = useSignOutAccount();
+import { Button } from "../ui/button";
+import { useUserContext } from "@/context/AuthContext";
+import { useSignOutAccount } from "@/lib/react-query/queries";
+
+const Topbar = () => {
   const navigate = useNavigate();
   const { user } = useUserContext();
+  const { mutate: signOut, isSuccess } = useSignOutAccount();
 
   useEffect(() => {
-    if (isSuccess) {
-      navigate(0);
-    }
+    if (isSuccess) navigate(0);
   }, [isSuccess]);
-
-  console.log("user: ", user);
 
   return (
     <section className="topbar">
@@ -29,12 +26,11 @@ const TopBar = () => {
           />
         </Link>
 
-        <div className=" flex gap-4">
+        <div className="flex gap-4">
           <Button
             variant="ghost"
             className="shad-button_ghost"
-            onClick={() => signOut()}
-          >
+            onClick={() => signOut()}>
             <img src="/assets/icons/logout.svg" alt="logout" />
           </Button>
           <Link to={`/profile/${user.id}`} className="flex-center gap-3">
@@ -50,4 +46,4 @@ const TopBar = () => {
   );
 };
 
-export default TopBar;
+export default Topbar;

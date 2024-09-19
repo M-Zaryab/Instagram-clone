@@ -1,8 +1,9 @@
-import { useUserContext } from "@/Context/AuthContext";
-import { multiFormatDateString } from "@/lib/utils";
 import { Models } from "appwrite";
 import { Link } from "react-router-dom";
-import PostStat from "./PostStat";
+
+import { PostStats } from "@/components/shared";
+import { multiFormatDateString } from "@/lib/utils";
+import { useUserContext } from "@/context/AuthContext";
 
 type PostCardProps = {
   post: Models.Document;
@@ -10,8 +11,6 @@ type PostCardProps = {
 
 const PostCard = ({ post }: PostCardProps) => {
   const { user } = useUserContext();
-
-  // console.log("post in POST_Card: ", post);
 
   if (!post.creator) return;
 
@@ -22,11 +21,11 @@ const PostCard = ({ post }: PostCardProps) => {
           <Link to={`/profile/${post.creator.$id}`}>
             <img
               src={
-                post?.creator?.imageUrl ||
-                "/asstes/icons/profile-placeholder.svg"
+                post.creator?.imageUrl ||
+                "/assets/icons/profile-placeholder.svg"
               }
               alt="creator"
-              className="rounded-full w-12 lg:h-12"
+              className="w-12 lg:h-12 rounded-full"
             />
           </Link>
 
@@ -35,21 +34,26 @@ const PostCard = ({ post }: PostCardProps) => {
               {post.creator.name}
             </p>
             <div className="flex-center gap-2 text-light-3">
-              <p className="subtle-semibold lg:small-regular">
+              <p className="subtle-semibold lg:small-regular ">
                 {multiFormatDateString(post.$createdAt)}
               </p>
-              -
+              •
               <p className="subtle-semibold lg:small-regular">
                 {post.location}
               </p>
             </div>
           </div>
         </div>
+
         <Link
           to={`/update-post/${post.$id}`}
-          className={`${user.id !== post.creator.$id && "hidden"}`}
-        >
-          <img src="/assets/icons/edit.svg" alt="edit" width={20} height={20} />
+          className={`${user.id !== post.creator.$id && "hidden"}`}>
+          <img
+            src={"/assets/icons/edit.svg"}
+            alt="edit"
+            width={20}
+            height={20}
+          />
         </Link>
       </div>
 
@@ -57,8 +61,8 @@ const PostCard = ({ post }: PostCardProps) => {
         <div className="small-medium lg:base-medium py-5">
           <p>{post.caption}</p>
           <ul className="flex gap-1 mt-2">
-            {post.tags.map((tag: string) => (
-              <li key={tag} className="text-light-3">
+            {post.tags.map((tag: string, index: string) => (
+              <li key={`${tag}${index}`} className="text-light-3 small-regular">
                 #{tag}
               </li>
             ))}
@@ -66,13 +70,13 @@ const PostCard = ({ post }: PostCardProps) => {
         </div>
 
         <img
-          src={post.imageUrl || "/asstes/icons/profile-placeholder.svg"}
+          src={post.imageUrl || "/assets/icons/profile-placeholder.svg"}
+          alt="post image"
           className="post-card_img"
-          alt="post-img"
         />
       </Link>
 
-      <PostStat post={post} userId={user.id} />
+      <PostStats post={post} userId={user.id} />
     </div>
   );
 };
